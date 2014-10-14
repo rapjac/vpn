@@ -205,7 +205,7 @@ class Application(Tk):
 		msgToBeSent = self.sentMsgVar.get()
 
 
-		# ***** INSERT FUNCTIONALITY FOR SENDING MESSAGE HERE *****
+		# ***** I'm a little teapot *****
 
 
 		pass
