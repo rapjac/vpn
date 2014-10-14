@@ -1,5 +1,4 @@
 #!/usr/bin/python
-
 from socket import *
 from tkinter import *
 
@@ -118,6 +117,7 @@ class Application(Tk):
 
 			# enable the corresponding fields and buttons
 			self.portNumberEntry.configure(state="normal")
+			self.hostnameEntry.configure(state="normal")
 			self.connectButton.configure(state="normal")
 
 		# client mode behaviour
@@ -155,14 +155,13 @@ class Application(Tk):
 
 			serverPort = int(self.portNumberEntry.get())
 			serverSocket = socket(AF_INET,SOCK_STREAM)
+			serverHost = self.hostnameEntry.get()
 
-			serverSocket.bind(('',serverPort)) 
+			serverSocket.bind((serverHost,serverPort)) 
 			serverSocket.listen(1) 
 
 			# For some reason when the following line is uncommented, the app stops working when "Connect" is clicked... not sure why...
-			# connectionSocket, addr = serverSocket.accept()
-
-
+			connectionSocket, addr = serverSocket.accept()
 
 			# update connection status in UI
 			connectMsg = "The server is ready to communicate with clients using port " + self.portNumberVar.get()
