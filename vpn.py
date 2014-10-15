@@ -1,6 +1,8 @@
 #!/usr/bin/python
 from socket import *
-from tkinter import *
+from select import select
+from Tkinter import *
+from Queue import *
 
 class Application(Tk):
 
@@ -10,7 +12,10 @@ class Application(Tk):
 
 		self.mode = 0
 		self.serverPort = 0
+		self.serverSocket = 0
+		self.clientSocket = 0
 		self.hostname = 0
+		self.message_queues = {}
 
 		self.initialize()
 
@@ -154,18 +159,12 @@ class Application(Tk):
 			# I assume this also includes the mutual authentication / key establishment
 
 			serverPort = int(self.portNumberEntry.get())
-			serverSocket = socket(AF_INET,SOCK_STREAM)
+			self.serverSocket = socket(AF_INET,SOCK_STREAM)
+			self.serverSocket.setblocking(0)
 			serverHost = self.hostnameEntry.get()
 
-			serverSocket.bind((serverHost,serverPort)) 
-			serverSocket.listen(1) 
-
-			# For some reason when the following line is uncommented, the app stops working when "Connect" is clicked... not sure why...
-			connectionSocket, addr = serverSocket.accept()
-
-			# update connection status in UI
-			connectMsg = "The server is ready to communicate with clients using port " + self.portNumberVar.get()
-			self.connectLabelVar.set(connectMsg)
+			self.serverSocket.bind((serverHost,serverPort)) 
+			self.serverSocket.listen(1) 		
 
 		# client mode behaviour
 		elif self.mode == 2:
@@ -187,8 +186,8 @@ class Application(Tk):
 			serverName = self.hostnameEntry.get()
 			serverPort = int(self.portNumberEntry.get())
 
-			clientSocket = socket(AF_INET, SOCK_STREAM) 
-			clientSocket.connect((serverName,serverPort)) 
+			self.clientSocket = socket(AF_INET, SOCK_STREAM) 
+			self.clientSocket.connect((serverName,serverPort)) 
 
 
 
@@ -202,20 +201,12 @@ class Application(Tk):
 	def onSendMessage(self):
 
 		msgToBeSent = self.sentMsgVar.get()
-
-
-		# ***** I'm a little teapot *****
-
-
-		pass
+		self.clientSocket.send(msgToBeSent)
 
 	def onReceiveMessage(self):
 
-
 		# ***** INSERT FUNCTIONALITY FOR RECEIVING MESSAGE HERE *****
-
-
-		pass
+		self.socketPoll()
 
 	def onContinue(self):
 
@@ -223,6 +214,51 @@ class Application(Tk):
 		# The corresponding field is supposed to show those intermediary messages for encoding etc.
 		# Just a placeholder for now
 		pass
+
+	def socketPoll(self):
+		#sockets we expect to read from
+		inputs = [self.serverSocket]
+		#sockets we expect to write to
+		outputs = []
+
+		# Poll the listenening socket for an incoming connection
+		while inputs:
+			readable, writable, exceptional = select(inputs, outputs, inputs)
+			# If incoming connection found for read we accept connection
+			for s in readable:
+				if s is self.serverSocket:
+					# A "readable" server socket is ready to accept a connection
+					connection, client_address = s.accept()
+
+					connection.setblocking(0)
+					inputs.append(connection)
+
+					self.message_queues[connection] = Queue()
+
+					# update connection status in UI
+					connectMsg = "The server is ready to communicate with clients using port " + self.portNumberVar.get()
+					self.connectLabelVar.set(connectMsg)
+
+				else:
+					data = s.recv(1024)
+					if data:
+						 # A readable client socket has data
+						print 'received "%s" from %s' % (data, s.getpeername())
+						self.message_queues[s].put(data)
+						# Add output channel for response
+						if s not in outputs:
+							outputs.append(s)
+					else:
+						# Interpret empty result as closed connection
+						print >> 'closing', client_address, 'after reading no data'
+						# Stop listening for input on the connection
+						if s in outputs:
+							outputs.remove(s)
+						inputs.remove(s)
+						s.close()
+
+						# Remove message queue
+						del message_queues[s]
 
 if __name__ == "__main__":
 	app = Application(None)
