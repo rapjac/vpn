@@ -1,0 +1,10 @@
+Start!
+	- B begins as server
+	- A begins as client
+	- Mutual Authentication via PFS w/ DH
+		- A → B : { "I'm A!" || Ra }
+		- A ← B : { Rb || E("Bob", Ra, g^b mod p, Kab) }
+		- A → B : { Rb || E("Alice", Rb, g^a mod p, Kab) }
+
+Sending Message:
+	- A → B : { message }Kshared

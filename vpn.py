@@ -215,27 +215,28 @@ class Application(Tk):
 			self.connectLabelVar.set("Undefined mode...")
 		
 	def onSendMessage(self):
+		message = self.sentMsgVar.get()
+
+		print 'received "%s"' % (message)
 		if self.mode == 1:
-			msgToBeSent = self.sentMsgVar.get()
-			self.connection.send(msgToBeSent)
+			self.connection.send(message)
 
 		elif self.mode == 2:
-			msgToBeSent = self.sentMsgVar.get()
-			self.clientSocket.send(msgToBeSent)
+			self.clientSocket.send(message)
 
 	def onReceiveMessage(self):
-
-		# ***** INSERT FUNCTIONALITY FOR RECEIVING MESSAGE HERE *****
 		if self.mode == 1:
-			data = self.connection.recv(1024)
-			if data:
-				 # A readable client socket has data
-				print 'received "%s"' % (data)
+			message = self.connection.recv(1024)
 		elif self.mode == 2:
-			data = self.clientSocket.recv(1024)
-			if data:
-				 # A readable client socket has data
-				print 'received "%s"' % (data)
+			message = self.clientSocket.recv(1024)
+		else:
+			message = ''
+
+		if message:
+			 # A readable client socket has data
+			print 'received "%s"' % (message)
+			self.otherMsgVar.set(self.decrypt(str(message)))
+			self.receivedMsgVar.set(self.decrypt(str(message)))
 
 	def onContinue(self):
 
@@ -243,6 +244,12 @@ class Application(Tk):
 		# The corresponding field is supposed to show those intermediary messages for encoding etc.
 		# Just a placeholder for now
 		pass
+
+	def ecrypt(self, plaintext):
+		return paintext
+
+	def decrypt(self, ciphertext):
+		return ciphertext
 
 if __name__ == "__main__":
 	app = Application(None)
