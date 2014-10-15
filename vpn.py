@@ -33,82 +33,86 @@ class Application(Tk):
 
 
 		# create "OK" button to select mode
-		self.modeButton = Button(self,text=u"OK",command=self.onSelectMode)
-		self.modeButton.grid(column=0,row=1,columnspan=2)
+		self.modeButton = Button(self,text=u"         OK        ",command=self.onSelectMode)
+		self.modeButton.grid(column=2,row=0,columnspan=1)
 
 		self.grid_columnconfigure(0,weight=1)
 
 		# create the label that shows which mode was selected
 		self.modeLabelVar = StringVar()
 		label = Label(self,textvariable=self.modeLabelVar,anchor="w",fg="blue",bg="white")
-		label.grid(column=0,row=2,columnspan=2,sticky='EW')
+		label.grid(column=0,row=1,columnspan=7,sticky='EW')
 
 		# create labels to prompt for server port # and hostname
-		label = Label(self,text="Server Port #",anchor="w",fg="black",bg="white")
-		label.grid(column=0,row=3,columnspan=2,sticky='EW')
+		label = Label(self,text="Server Port #:",anchor="w",fg="black",bg="white")
+		label.grid(column=0,row=2,columnspan=1,sticky='EW')
 
-		label = Label(self,text="Host Name",anchor="w",fg="black",bg="white")
-		label.grid(column=0,row=4,columnspan=2,sticky='EW')
+		label = Label(self,text="Host Name:",anchor="w",fg="black",bg="white")
+		label.grid(column=2,row=2,columnspan=1,sticky='EW')
 
+		label = Label(self,text="Shared Secret Value:",anchor="w",fg="black",bg="white")
+		label.grid(column=4,row=2,columnspan=1,sticky='EW')
 
 		# create entry fields to allow user input for server port # and hostname
 		self.portNumberVar = StringVar()
 		self.portNumberEntry = Entry(self,textvariable=self.portNumberVar,state="disabled")
-		self.portNumberEntry.grid(column=1,row=3,sticky='EW')
+		self.portNumberEntry.grid(column=1,row=2,sticky='EW')
 		self.portNumberVar.set(u"12000")		
 
 		self.hostnameVar = StringVar()
 		self.hostnameEntry = Entry(self,textvariable=self.hostnameVar,state="disabled")
-		self.hostnameEntry.grid(column=1,row=4,sticky='EW')
+		self.hostnameEntry.grid(column=3,row=2,sticky='NE')
 		self.hostnameVar.set(u"localhost")		
+
+		self.ssvVar = StringVar()
+		self.ssvEntry = Entry(self,textvariable=self.ssvVar,state="disabled")
+		self.ssvEntry.grid(column=5,row=2,sticky='EW')
+		self.ssvVar.set(u"Input SSV here")		
 
 		# create a Connect button
 		self.connectButton = Button(self,text=u"Connect",command=self.onConnect, state="disabled")
-		self.connectButton.grid(column=0,row=5,columnspan=2)
+		self.connectButton.grid(column=6,row=2,columnspan=1)
 
 		# create a label that shows connection status
 		self.connectLabelVar = StringVar()
-		label = Label(self,textvariable=self.connectLabelVar,anchor="w",fg="black",bg="white")
-		label.grid(column=0,row=6,columnspan=2,sticky='EW')
+		label = Label(self,textvariable=self.connectLabelVar,anchor="w",fg="blue",bg="white")
+		label.grid(column=0,row=3,columnspan=7,sticky='EW')
 
 		# create labels that prompt for sent and received messages
-		label = Label(self,text="Sent msg: ",anchor="w",fg="black",bg="white")
-		label.grid(column=0,row=7,columnspan=2,sticky='EW')
+		label = Label(self,text="Send msg: ",anchor="w",fg="black",bg="white")
+		label.grid(column=0,row=4,columnspan=2,sticky='NW')
 
 		label = Label(self,text="Received msg: ",anchor="w",fg="black",bg="white")
-		label.grid(column=0,row=8,columnspan=2,sticky='EW')
+		label.grid(column=3,row=4,columnspan=2,sticky='NE')		
 
-		# create entry fields that display sent and received messages
-		self.sentMsgVar = StringVar()
-		self.sentMsgEntry = Entry(self,textvariable=self.sentMsgVar,state="disabled",width=30)
-		self.sentMsgEntry.grid(column=1,row=7,sticky='EW')
-		self.sentMsgVar.set(u"")	
+		# create text areas that display sent and received messages
+		self.sentText = Text(self,height=5,width=32)
+		self.sentText.grid(column=1,row=4, columnspan=2,sticky='EW')
+		self.sentText.insert(INSERT, "Input the text to be sent here.")
 
-		self.receivedMsgVar = StringVar()
-		self.receivedMsgEntry = Entry(self,textvariable=self.receivedMsgVar,state="disabled",width=30)
-		self.receivedMsgEntry.grid(column=1,row=8,sticky='EW')
-		self.receivedMsgVar.set(u"")			
+		receivedText = Text(self,height=5,width=32)
+		receivedText.grid(column=5,row=4, columnspan=2,sticky='EW')
+		receivedText.insert(INSERT, "Received text will appear here.")
 
 		# create send and receive buttons
 		self.sendMsgButton = Button(self,text=u"Send",command=self.onSendMessage, state="disabled")
-		self.sendMsgButton.grid(column=3,row=7,columnspan=2)
+		self.sendMsgButton.grid(column=1,row=5,columnspan=2,sticky='EW')
 
 		self.receiveMsgButton = Button(self,text=u"Receive",command=self.onReceiveMessage, state="disabled")
-		self.receiveMsgButton.grid(column=3,row=8,columnspan=2)
+		self.receiveMsgButton.grid(column=5,row=5,columnspan=2,sticky='EW')
+		
+		# extra padding
+		label = Label(self,text=" ",anchor="w",fg="black",bg="white")
+		label.grid(column=0,row=6,columnspan=7,sticky='NE')		
 
-		# create label that indicate intermediary messages
-		label = Label(self,text="Other msgs: ",anchor="w",fg="black",bg="white")
-		label.grid(column=0,row=9,columnspan=1,sticky='EW')
+		# create label to indicate raw text
+		label = Label(self,text="Raw message: ",anchor="w",fg="black",bg="white")
+		label.grid(column=0,row=7,columnspan=2,sticky='NW')
 
-		# create field for intermediary messages
-		self.otherMsgVar = StringVar()
-		self.otherMsgEntry = Entry(self,textvariable=self.otherMsgVar,state="normal",width=30)
-		self.otherMsgEntry.grid(column=1,row=9,sticky='EW')
-		self.otherMsgVar.set(u"")	
-
-		# create continue button
-		self.continueButton = Button(self,text=u"Continue",command=self.onContinue, state="normal")
-		self.continueButton.grid(column=3,row=9,columnspan=2)
+		# create text area to display the raw message
+		receivedText = Text(self,height=5)
+		receivedText.grid(column=1,row=7, columnspan=6,sticky='EW')
+		receivedText.insert(INSERT, "Raw messages received will appear here.")
 
 	def onSelectMode(self):
 
@@ -123,6 +127,8 @@ class Application(Tk):
 			self.portNumberEntry.configure(state="normal")
 			self.hostnameEntry.configure(state="normal")
 			self.connectButton.configure(state="normal")
+			self.ssvEntry.configure(state="normal")
+			self.connectLabelVar.set("Note: After pressing Connect, this window will pause and wait for the client's connection before resuming.")
 
 		# client mode behaviour
 		elif self.mode == 2:
@@ -132,6 +138,7 @@ class Application(Tk):
 			self.portNumberEntry.configure(state="normal")
 			self.hostnameEntry.configure(state="normal")
 			self.connectButton.configure(state="normal")
+			self.ssvEntry.configure(state="normal")
 
 		else:
 			self.modeLabelVar.set("Undefined mode...")
@@ -147,12 +154,8 @@ class Application(Tk):
 			# enable/disable the corresponding fields and buttons
 			self.portNumberEntry.configure(state="disabled")
 			self.connectButton.configure(state="disabled")
-			self.sentMsgEntry.configure(state="normal")
-			self.receivedMsgEntry.configure(state="normal")
 			self.sendMsgButton.configure(state="normal")
 			self.receiveMsgButton.configure(state="normal")
-
-
 
 			# ***** INSERT CODE TO SETUP SERVER CONNECTION HERE *****
 			# I assume this also includes the mutual authentication / key establishment
@@ -193,8 +196,6 @@ class Application(Tk):
 			self.portNumberEntry.configure(state="disabled")
 			self.hostnameEntry.configure(state="disabled")
 			self.connectButton.configure(state="disabled")
-			self.sentMsgEntry.configure(state="normal")
-			self.receivedMsgEntry.configure(state="normal")
 			self.sendMsgButton.configure(state="normal")
 			self.receiveMsgButton.configure(state="normal")
 
@@ -215,9 +216,9 @@ class Application(Tk):
 			self.connectLabelVar.set("Undefined mode...")
 		
 	def onSendMessage(self):
-		message = self.sentMsgVar.get()
+		message = self.sentText.get(1.0, END)
 
-		print 'received "%s"' % (message)
+		print 'sent "%s"' % (message)
 		if self.mode == 1:
 			self.connection.send(message)
 
@@ -238,19 +239,12 @@ class Application(Tk):
 			self.otherMsgVar.set(self.decrypt(str(message)))
 			self.receivedMsgVar.set(self.decrypt(str(message)))
 
-	def onContinue(self):
-
-		# The purpose of this button is to step through messages one step at a time (as per instructions)
-		# The corresponding field is supposed to show those intermediary messages for encoding etc.
-		# Just a placeholder for now
-		pass
-
 	def ecrypt(self, plaintext):
 		return paintext
 
 	def decrypt(self, ciphertext):
 		return ciphertext
-
+		
 if __name__ == "__main__":
 	app = Application(None)
 	app.title('VPN')
