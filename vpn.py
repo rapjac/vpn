@@ -2,7 +2,6 @@
 from socket import *
 from select import select
 from Tkinter import *
-from Queue import *
 
 class Application(Tk):
 
@@ -13,9 +12,9 @@ class Application(Tk):
 		self.mode = 0
 		self.serverPort = 0
 		self.serverSocket = 0
+		self.connection = 0
 		self.clientSocket = 0
 		self.hostname = 0
-		self.message_queues = {}
 
 		self.initialize()
 
@@ -164,7 +163,28 @@ class Application(Tk):
 			serverHost = self.hostnameEntry.get()
 
 			self.serverSocket.bind((serverHost,serverPort)) 
-			self.serverSocket.listen(1) 		
+			self.serverSocket.listen(1) 
+
+			#sockets we expect to read from
+			inputs = [self.serverSocket]
+			#sockets we expect to write to
+			outputs = []
+
+			readable, writable, exceptional = select(inputs, outputs, inputs)
+
+			for s in readable:
+				if s is self.serverSocket:
+					# A "readable" server socket is ready to accept a connection
+					self.connection, client_address = s.accept()
+
+					self.connection.setblocking(0)
+					inputs.append(self.connection)
+					outputs.append(self.connection)
+
+					# update connection status in UI
+					connectMsg = "The server is ready to communicate with clients using port " + self.portNumberVar.get()
+					self.connectLabelVar.set(connectMsg)
+
 
 		# client mode behaviour
 		elif self.mode == 2:
@@ -178,8 +198,6 @@ class Application(Tk):
 			self.sendMsgButton.configure(state="normal")
 			self.receiveMsgButton.configure(state="normal")
 
-
-
 			# ***** INSERT CODE TO SETUP CLIENT CONNECTION HERE *****
 			# I assume this also includes the mutual authentication / key establishment
 
@@ -189,8 +207,6 @@ class Application(Tk):
 			self.clientSocket = socket(AF_INET, SOCK_STREAM) 
 			self.clientSocket.connect((serverName,serverPort)) 
 
-
-
 			# update connection status in UI
 			connectMsg = "The server is ready to communicate with host " + self.hostnameVar.get() + " using port " + self.portNumberVar.get()
 			self.connectLabelVar.set(connectMsg)
@@ -199,14 +215,27 @@ class Application(Tk):
 			self.connectLabelVar.set("Undefined mode...")
 		
 	def onSendMessage(self):
+		if self.mode == 1:
+			msgToBeSent = self.sentMsgVar.get()
+			self.connection.send(msgToBeSent)
 
-		msgToBeSent = self.sentMsgVar.get()
-		self.clientSocket.send(msgToBeSent)
+		elif self.mode == 2:
+			msgToBeSent = self.sentMsgVar.get()
+			self.clientSocket.send(msgToBeSent)
 
 	def onReceiveMessage(self):
 
 		# ***** INSERT FUNCTIONALITY FOR RECEIVING MESSAGE HERE *****
-		self.socketPoll()
+		if self.mode == 1:
+			data = self.connection.recv(1024)
+			if data:
+				 # A readable client socket has data
+				print 'received "%s"' % (data)
+		elif self.mode == 2:
+			data = self.clientSocket.recv(1024)
+			if data:
+				 # A readable client socket has data
+				print 'received "%s"' % (data)
 
 	def onContinue(self):
 
@@ -214,51 +243,6 @@ class Application(Tk):
 		# The corresponding field is supposed to show those intermediary messages for encoding etc.
 		# Just a placeholder for now
 		pass
-
-	def socketPoll(self):
-		#sockets we expect to read from
-		inputs = [self.serverSocket]
-		#sockets we expect to write to
-		outputs = []
-
-		# Poll the listenening socket for an incoming connection
-		while inputs:
-			readable, writable, exceptional = select(inputs, outputs, inputs)
-			# If incoming connection found for read we accept connection
-			for s in readable:
-				if s is self.serverSocket:
-					# A "readable" server socket is ready to accept a connection
-					connection, client_address = s.accept()
-
-					connection.setblocking(0)
-					inputs.append(connection)
-
-					self.message_queues[connection] = Queue()
-
-					# update connection status in UI
-					connectMsg = "The server is ready to communicate with clients using port " + self.portNumberVar.get()
-					self.connectLabelVar.set(connectMsg)
-
-				else:
-					data = s.recv(1024)
-					if data:
-						 # A readable client socket has data
-						print 'received "%s" from %s' % (data, s.getpeername())
-						self.message_queues[s].put(data)
-						# Add output channel for response
-						if s not in outputs:
-							outputs.append(s)
-					else:
-						# Interpret empty result as closed connection
-						print >> 'closing', client_address, 'after reading no data'
-						# Stop listening for input on the connection
-						if s in outputs:
-							outputs.remove(s)
-						inputs.remove(s)
-						s.close()
-
-						# Remove message queue
-						del message_queues[s]
 
 if __name__ == "__main__":
 	app = Application(None)
