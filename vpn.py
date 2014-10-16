@@ -2,12 +2,13 @@
 from socket import *
 from select import select
 from Tkinter import *
-from haslib import *
+from hashlib import *
 from Crypto import Random
 from Crypto.Cipher import AES
 
 class Application(Tk):
 
+	BLOCK_SIZE = 16
 	def __init__(self,parent):
 		Tk.__init__(self,parent)
 		self.parent = parent
@@ -16,6 +17,7 @@ class Application(Tk):
 		self.key = ""
 		self.generator = 2
 		self.prime = 23
+
 		self.serverPort = 0
 		self.serverSocket = 0
 		self.connection = 0
@@ -242,8 +244,15 @@ class Application(Tk):
 			self.rawMessageText.insert(1.0, self.decrypt(str(message)))
 			self.receivedText.insert(1.0, self.decrypt(str(message)))
 
+	def pad(self, text):
+		x = BLOCK_SIZE - len(text)%BLOCK_SIZE
+		return text.zfill(x)
+
 	def encrypt(self, plaintext):
-		return plaintext
+		plaintext = pad(plaintext)
+		iv = Random.new().read(AES.BLOCK_SIZE)
+		cipher = AES.new(self.key, AES.MODE_CBC, iv)
+		return base64.b64encode(iv + cipher.encrypt(plaintext))
 
 	def decrypt(self, ciphertext):
 		return ciphertext
@@ -268,10 +277,20 @@ class Application(Tk):
 	def authenticate(self):
 		hashSeed = os.urandom(8)
 		hash_object = hashlib.sha1(b(hashSeed))
+		# returns a string of length 40
 		nonce = hash_object.hexdigest()
 
 		sendText(nonce)
 		response = receiveText()
+
+		x = len(response)
+		# Response excluding nonce
+		encMessage = response[41:x]
+
+		authMessage = decrypt(encMessage)
+		if authMessage[:6] == "server"
+			authResponse = "client" + response[:40] + pow(self.generator, , self.prime)
+
 
 if __name__ == "__main__":
 	app = Application(None)
