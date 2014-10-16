@@ -5,6 +5,7 @@ from Tkinter import *
 from hashlib import *
 from Crypto import Random
 from Crypto.Cipher import AES
+import base64
 
 class Application(Tk):
 
@@ -14,7 +15,8 @@ class Application(Tk):
 		self.parent = parent
 
 		self.mode = 0
-		self.key = ""
+		self.ssv = ''
+		self.aes_key = ''
 		self.generator = 2
 		self.prime = 23
 
@@ -157,7 +159,11 @@ class Application(Tk):
 
 	def onConnect(self):
 		# server mode behaviour
-		self.Key = self.ssvEntry.get()
+		self.ssv = self.ssvEntry.get()
+
+		ssv_hash = sha1()
+		ssv_hash.update(self.ssv)
+		self.aes_key = ssv_hash.hexdigest()[:16]
 
 		if self.mode == 1:
 
@@ -227,40 +233,44 @@ class Application(Tk):
 		
 	def onSendMessage(self):
 		message = self.sentText.get(1.0, END)
+		encrypted_message = self.encrypt(message)
 
-		print 'sent "%s"' % (message)
-		self.sendText(message)
+		print 'sent "%s"' % (encrypted_message)
+		self.sendText(encrypted_message)
 
 	def onReceiveMessage(self):
-		message = self.receiveText()
+		encrypted_message = self.receiveText()
 
-		if message:
+		if encrypted_message:
 			 # A readable client socket has data
-			print 'received "%s"' % (message)
+			print 'received "%s"' % (encrypted_message)
 
 			self.rawMessageText.delete(1.0, END)
 			self.receivedText.delete(1.0, END)
 
-			self.rawMessageText.insert(1.0, self.decrypt(str(message)))
-			self.receivedText.insert(1.0, self.decrypt(str(message)))
+			self.rawMessageText.insert(1.0, self.decrypt(encrypted_message))
+			self.receivedText.insert(1.0, encrypted_message)
 
 	def pad(self, text):
-		x = BLOCK_SIZE - len(text)%BLOCK_SIZE
-		return text.zfill(x)
+		while len(text) % self.BLOCK_SIZE != 0:
+			text = text + '0'
+		return text
 
 	def encrypt(self, plaintext):
-		plaintext = pad(plaintext)
-		iv = Random.new().read(AES.BLOCK_SIZE)
-		cipher = AES.new(self.key, AES.MODE_CBC, iv)
+		plaintext = self.pad(plaintext)
+		iv = Random.new().read(self.BLOCK_SIZE)
+		cipher = AES.new(self.aes_key, AES.MODE_CBC, iv)
 		return base64.b64encode(iv + cipher.encrypt(plaintext))
 
 	def decrypt(self, ciphertext):
-		return ciphertext
+		ciphertext = base64.b64decode(ciphertext)
+		iv = ciphertext[:16]
+		cipher = AES.new(self.aes_key, AES.MODE_CBC, iv)
+		return cipher.decrypt(ciphertext[16:])
 
 	def sendText(self, text):
 		if self.mode == 1:
 			self.connection.send(text)
-
 		elif self.mode == 2:
 			self.clientSocket.send(text)
 
@@ -275,21 +285,22 @@ class Application(Tk):
 		return text
 
 	def authenticate(self):
-		hashSeed = os.urandom(8)
-		hash_object = hashlib.sha1(b(hashSeed))
-		# returns a string of length 40
-		nonce = hash_object.hexdigest()
+		# hashSeed = os.urandom(8)
+		# hash_object = hashlib.sha1(b(hashSeed))
+		# # returns a string of length 40
+		# nonce = hash_object.hexdigest()
 
-		sendText(nonce)
-		response = receiveText()
+		# sendText(nonce)
+		# response = receiveText()
 
-		x = len(response)
-		# Response excluding nonce
-		encMessage = response[41:x]
+		# x = len(response)
+		# # Response excluding nonce
+		# encMessage = response[41:x]
 
-		authMessage = decrypt(encMessage)
+		# authMessage = decrypt(encMessage)
 		# if authMessage[:6] == 'server'
 		# 	authResponse = "client" + response[:40] + pow(self.generator, , self.prime)
+		pass
 
 
 if __name__ == "__main__":
