@@ -229,10 +229,10 @@ class Application(Tk):
 		message = self.sentText.get(1.0, END)
 
 		print 'sent "%s"' % (message)
-		sendText(message)
+		self.sendText(message)
 
 	def onReceiveMessage(self):
-		message = receivedText()
+		message = self.receiveText()
 
 		if message:
 			 # A readable client socket has data
@@ -288,8 +288,8 @@ class Application(Tk):
 		encMessage = response[41:x]
 
 		authMessage = decrypt(encMessage)
-		if authMessage[:6] == "server"
-			authResponse = "client" + response[:40] + pow(self.generator, , self.prime)
+		# if authMessage[:6] == 'server'
+		# 	authResponse = "client" + response[:40] + pow(self.generator, , self.prime)
 
 
 if __name__ == "__main__":
