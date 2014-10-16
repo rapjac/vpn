@@ -6,6 +6,7 @@ from hashlib import *
 from Crypto import Random
 from Crypto.Cipher import AES
 import base64
+from os import *
 
 class Application(Tk):
 
@@ -204,6 +205,7 @@ class Application(Tk):
 					connectMsg = "The server is ready to communicate with clients using port " + self.portNumberVar.get()
 					self.connectLabelVar.set(connectMsg)
 
+			#self.authenticate()
 
 		# client mode behaviour
 		elif self.mode == 2:
@@ -227,6 +229,8 @@ class Application(Tk):
 			# update connection status in UI
 			connectMsg = "The server is ready to communicate with host " + self.hostnameVar.get() + " using port " + self.portNumberVar.get()
 			self.connectLabelVar.set(connectMsg)
+
+			#self.authenticate()
 
 		else:
 			self.connectLabelVar.set("Undefined mode...")
@@ -285,23 +289,58 @@ class Application(Tk):
 		return text
 
 	def authenticate(self):
-		# hashSeed = os.urandom(8)
-		# hash_object = hashlib.sha1(b(hashSeed))
-		# # returns a string of length 40
-		# nonce = hash_object.hexdigest()
+		#Server side authentication
+		if self.mode == 1:
+			rA = ''
+			rA = self.receiveText()
 
-		# sendText(nonce)
-		# response = receiveText()
+			while rA != '':
+				pass
 
-		# x = len(response)
-		# # Response excluding nonce
-		# encMessage = response[41:x]
+			hashSeed = urandom(8)
+			hash_object = sha1(b'%s' % (hashSeed))
+			# returns a string of length 40
+			nonce = hash_object.hexdigest()
 
-		# authMessage = decrypt(encMessage)
-		# if authMessage[:6] == 'server'
-		# 	authResponse = "client" + response[:40] + pow(self.generator, , self.prime)
-		pass
+			authMessage = "server" + rA + str(pow(self.generator, 5, self.prime))
+			authMessage = self.encrypt(authMessage)
 
+			authMessage = nonce + authMessage
+			self.sendText(authMessage)
+			authResponse = self.receiveText()
+
+			if authMessage[:6] != 'client':
+				self.closeSocket()
+		#client Side authentication
+		elif self.mode == 2:
+			hashSeed = urandom(8)
+			hash_object = sha1(b'%s' % (hashSeed))
+			# returns a string of length 40
+			nonce = hash_object.hexdigest()
+
+			self.sendText(nonce)
+
+			response = self.receiveText()
+
+			x = len(response)
+			# Response excluding nonce
+			encMessage = response[40:x]
+
+			authMessage = self.decrypt(encMessage)
+			if authMessage[:6] == 'server':
+				authResponse = "client" + response[:40] + str(pow(self.generator, 3, self.prime))
+				authResponse = self.encrypt(authResponse)
+				self.sendText(authResponse)
+				return True
+			else:
+				self.closeSocket()
+				return False
+
+	def closeSocket(self):
+		if self.mode == 1:
+			self.connection.close()
+		elif self.mode == 2:
+			self.clientSocket.close()
 
 if __name__ == "__main__":
 	app = Application(None)
