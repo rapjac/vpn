@@ -90,9 +90,9 @@ class Application(Tk):
 		self.sentText.grid(column=1,row=4, columnspan=2,sticky='EW')
 		self.sentText.insert(INSERT, "Input the text to be sent here.")
 
-		receivedText = Text(self,height=5,width=32)
-		receivedText.grid(column=5,row=4, columnspan=2,sticky='EW')
-		receivedText.insert(INSERT, "Received text will appear here.")
+		self.receivedText = Text(self,height=5,width=32)
+		self.receivedText.grid(column=5,row=4, columnspan=2,sticky='EW')
+		self.receivedText.insert(INSERT, "Received text will appear here.")
 
 		# create send and receive buttons
 		self.sendMsgButton = Button(self,text=u"Send",command=self.onSendMessage, state="disabled")
@@ -110,9 +110,9 @@ class Application(Tk):
 		label.grid(column=0,row=7,columnspan=2,sticky='NW')
 
 		# create text area to display the raw message
-		receivedText = Text(self,height=5)
-		receivedText.grid(column=1,row=7, columnspan=6,sticky='EW')
-		receivedText.insert(INSERT, "Raw messages received will appear here.")
+		self.rawMessageText = Text(self,height=5)
+		self.rawMessageText.grid(column=1,row=7, columnspan=6,sticky='EW')
+		self.rawMessageText.insert(INSERT, "Raw messages received will appear here.")
 
 	def onSelectMode(self):
 
@@ -236,15 +236,19 @@ class Application(Tk):
 		if message:
 			 # A readable client socket has data
 			print 'received "%s"' % (message)
-			self.otherMsgVar.set(self.decrypt(str(message)))
-			self.receivedMsgVar.set(self.decrypt(str(message)))
 
-	def ecrypt(self, plaintext):
-		return paintext
+			self.rawMessageText.delete(1.0, END)
+			self.receivedText.delete(1.0, END)
+
+			self.rawMessageText.insert(1.0, self.decrypt(str(message)))
+			self.receivedText.insert(1.0, self.decrypt(str(message)))
+
+	def encrypt(self, plaintext):
+		return plaintext
 
 	def decrypt(self, ciphertext):
 		return ciphertext
-		
+
 if __name__ == "__main__":
 	app = Application(None)
 	app.title('VPN')
