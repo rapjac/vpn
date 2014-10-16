@@ -2,6 +2,9 @@
 from socket import *
 from select import select
 from Tkinter import *
+from haslib import *
+from Crypto import Random
+from Crypto.Cipher import AES
 
 class Application(Tk):
 
@@ -10,6 +13,9 @@ class Application(Tk):
 		self.parent = parent
 
 		self.mode = 0
+		self.key = ""
+		self.generator = 2
+		self.prime = 23
 		self.serverPort = 0
 		self.serverSocket = 0
 		self.connection = 0
@@ -149,6 +155,8 @@ class Application(Tk):
 
 	def onConnect(self):
 		# server mode behaviour
+		self.Key = self.ssvEntry.get()
+
 		if self.mode == 1:
 
 			# enable/disable the corresponding fields and buttons
@@ -219,19 +227,10 @@ class Application(Tk):
 		message = self.sentText.get(1.0, END)
 
 		print 'sent "%s"' % (message)
-		if self.mode == 1:
-			self.connection.send(message)
-
-		elif self.mode == 2:
-			self.clientSocket.send(message)
+		sendText(message)
 
 	def onReceiveMessage(self):
-		if self.mode == 1:
-			message = self.connection.recv(1024)
-		elif self.mode == 2:
-			message = self.clientSocket.recv(1024)
-		else:
-			message = ''
+		message = receivedText()
 
 		if message:
 			 # A readable client socket has data
@@ -248,6 +247,31 @@ class Application(Tk):
 
 	def decrypt(self, ciphertext):
 		return ciphertext
+
+	def sendText(self, text):
+		if self.mode == 1:
+			self.connection.send(text)
+
+		elif self.mode == 2:
+			self.clientSocket.send(text)
+
+	def receiveText(self):
+		if self.mode == 1:
+			text = self.connection.recv(1024)
+		elif self.mode == 2:
+			text = self.clientSocket.recv(1024)
+		else:
+			text = ''
+
+		return text
+
+	def authenticate(self):
+		hashSeed = os.urandom(8)
+		hash_object = hashlib.sha1(b(hashSeed))
+		nonce = hash_object.hexdigest()
+
+		sendText(nonce)
+		response = receiveText()
 
 if __name__ == "__main__":
 	app = Application(None)
